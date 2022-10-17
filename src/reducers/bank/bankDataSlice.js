@@ -1563,7 +1563,6 @@ export const bankDataSlice = createSlice({
       const index = list.findIndex((x) => x.id === parseInt(action.payload));
 
       state.selected = state.list[index];
-      console.log(state.selected);
     },
     setUpdating: (state, action) => {
       state.updating = action.payload;

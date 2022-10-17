@@ -31,17 +31,20 @@ import {
 import { fetchBankData } from "src/api/bank/fetchBankData";
 import { useAppSelector, useAppDispatch } from "src/@core/hooks/hooks";
 
-import { makeStyles } from "@mui/styles";
+import { DefaultTheme, makeStyles } from "@mui/styles";
 import { Dayjs } from "dayjs";
+import { Theme } from "@mui/material/styles";
 
 type IBankData = {
   id: string;
   transactionDate: string;
   category: string;
   description: string;
+  credit: number;
+  debit: number;
 };
 
-const useStyles = makeStyles((theme: any) => ({
+const useStyles = makeStyles((theme: Theme) => ({
   root: {
     width: "100%",
   },
@@ -66,8 +69,8 @@ const useStyles = makeStyles((theme: any) => ({
   grow: {
     flexGrow: 1,
   },
-  deleteButton: {
-    marginLeft: theme.spacing(1),
+  viewButton: {
+    color: "#FFFFFF !important",
   },
   spacer: {
     flexGrow: "1",
@@ -106,7 +109,11 @@ const headCells = [
   { id: "action", numeric: false, disablePadding: false, label: "Action" },
 ];
 
-function descendingComparator(a: any, b: any, orderBy: any) {
+function descendingComparator(
+  a: IBankData,
+  b: IBankData,
+  orderBy: keyof IBankData
+) {
   if (b[orderBy] < a[orderBy]) {
     return -1;
   }
@@ -116,10 +123,10 @@ function descendingComparator(a: any, b: any, orderBy: any) {
   return 0;
 }
 
-function getComparator(order: any, orderBy: any) {
+function getComparator(order: string, orderBy: keyof IBankData) {
   return order === "desc"
-    ? (a: any, b: any) => descendingComparator(a, b, orderBy)
-    : (a: any, b: any) => -descendingComparator(a, b, orderBy);
+    ? (a: IBankData, b: IBankData) => descendingComparator(a, b, orderBy)
+    : (a: IBankData, b: IBankData) => -descendingComparator(a, b, orderBy);
 }
 
 function stableSort(array: any, comparator: any) {
@@ -163,11 +170,6 @@ function EnhancedTableHead(props: any) {
               onClick={createSortHandler(headCell.id)}
             >
               {headCell.label}
-              {orderBy === headCell.id ? (
-                <span className={classes.visuallyHidden}>
-                  {order === "desc" ? "sorted descending" : "sorted ascending"}
-                </span>
-              ) : null}
             </TableSortLabel>
           </TableCell>
         ))}
@@ -187,7 +189,7 @@ const TableBasic = () => {
   const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [order, setOrder] = React.useState<string>("asc");
-  const [orderBy, setOrderBy] = React.useState<string>("");
+  const [orderBy, setOrderBy] = React.useState<keyof IBankData>("id");
   const [value, setValue] = React.useState<DateRange<Dayjs>>([null, null]);
 
   const handleChangePage = (event: unknown, newPage: number) => {
@@ -296,13 +298,14 @@ const TableBasic = () => {
                     <TableCell align="left">{row.description}</TableCell>
                     <TableCell align="right">
                       <Button
+                        className={classes.viewButton}
                         onClick={() =>
                           router.push(router.pathname + "/" + row.id)
                         }
                         size="small"
                         variant="contained"
                       >
-                        View
+                        Details
                       </Button>
                     </TableCell>
                   </TableRow>
