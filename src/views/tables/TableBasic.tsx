@@ -9,9 +9,13 @@ import TableRow from "@mui/material/TableRow";
 import TableHead from "@mui/material/TableHead";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
+import TablePagination from "@mui/material/TablePagination";
+import TableSortLabel from "@mui/material/TableSortLabel";
 import TableContainer from "@mui/material/TableContainer";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Grid from "@mui/material/Grid";
 import { LocalizationProvider } from "@mui/x-date-pickers-pro";
 import { AdapterDayjs } from "@mui/x-date-pickers-pro/AdapterDayjs";
 import {
@@ -26,7 +30,7 @@ import {
 } from "src/reducers/bank/bankDataSlice";
 import { fetchBankData } from "src/api/bank/fetchBankData";
 import { useAppSelector, useAppDispatch } from "src/@core/hooks/hooks";
-import { Button, Grid, TablePagination, TableSortLabel } from "@mui/material";
+
 import { makeStyles } from "@mui/styles";
 import { Dayjs } from "dayjs";
 
@@ -173,15 +177,17 @@ function EnhancedTableHead(props: any) {
 }
 
 const TableBasic = () => {
+  // ** Hooks
   const router = useRouter();
   const classes = useStyles();
   const dispatch = useAppDispatch();
   const rows = useAppSelector(selectFilteredBankData);
 
+  // ** States
   const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
-  const [order, setOrder] = React.useState("asc");
-  const [orderBy, setOrderBy] = React.useState("");
+  const [order, setOrder] = React.useState<string>("asc");
+  const [orderBy, setOrderBy] = React.useState<string>("");
   const [value, setValue] = React.useState<DateRange<Dayjs>>([null, null]);
 
   const handleChangePage = (event: unknown, newPage: number) => {
@@ -226,7 +232,7 @@ const TableBasic = () => {
             <Box display="flex" justifyContent="flex-end">
               <LocalizationProvider
                 dateAdapter={AdapterDayjs}
-                localeText={{ start: "Check-in", end: "Check-out" }}
+                localeText={{ start: "Start Date", end: "End Date" }}
               >
                 <DateRangePicker
                   value={value}
@@ -290,7 +296,9 @@ const TableBasic = () => {
                     <TableCell align="left">{row.description}</TableCell>
                     <TableCell align="right">
                       <Button
-                        href={router.pathname + "/" + row.id}
+                        onClick={() =>
+                          router.push(router.pathname + "/" + row.id)
+                        }
                         size="small"
                         variant="contained"
                       >
