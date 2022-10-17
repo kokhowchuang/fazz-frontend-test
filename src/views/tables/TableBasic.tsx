@@ -1,5 +1,6 @@
 import React, { useState, useEffect, ChangeEvent } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { useRouter } from "next/router";
 
 // ** MUI Imports
 import Paper from "@mui/material/Paper";
@@ -9,12 +10,25 @@ import TableHead from "@mui/material/TableHead";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
+import TextField from "@mui/material/TextField";
+import Box from "@mui/material/Box";
+import { LocalizationProvider } from "@mui/x-date-pickers-pro";
+import { AdapterDayjs } from "@mui/x-date-pickers-pro/AdapterDayjs";
+import {
+  DateRangePicker,
+  DateRange,
+} from "@mui/x-date-pickers-pro/DateRangePicker";
 
-import { selectBankData } from "src/reducers/bank/bankDataSlice";
+import {
+  selectFilteredBankData,
+  filterData,
+  filterDate,
+} from "src/reducers/bank/bankDataSlice";
 import { fetchBankData } from "src/api/bank/fetchBankData";
 import { useAppSelector, useAppDispatch } from "src/@core/hooks/hooks";
-import { Button, TablePagination, TableSortLabel } from "@mui/material";
+import { Button, Grid, TablePagination, TableSortLabel } from "@mui/material";
 import { makeStyles } from "@mui/styles";
+import { Dayjs } from "dayjs";
 
 type IBankData = {
   id: string;
@@ -123,15 +137,7 @@ function stableSort(array: any, comparator: any) {
 }
 
 function EnhancedTableHead(props: any) {
-  const {
-    classes,
-    onSelectAllClick,
-    order,
-    orderBy,
-    numSelected,
-    rowCount,
-    onRequestSort,
-  } = props;
+  const { classes, order, orderBy, onRequestSort } = props;
   const createSortHandler = (property: any) => (event: any) => {
     onRequestSort(event, property);
   };
@@ -167,14 +173,16 @@ function EnhancedTableHead(props: any) {
 }
 
 const TableBasic = () => {
+  const router = useRouter();
   const classes = useStyles();
   const dispatch = useAppDispatch();
-  const rows = useAppSelector(selectBankData);
+  const rows = useAppSelector(selectFilteredBankData);
 
   const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("");
+  const [value, setValue] = React.useState<DateRange<Dayjs>>([null, null]);
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -195,17 +203,70 @@ const TableBasic = () => {
     if (rows.length === 0) {
       dispatch(fetchBankData());
     }
-  }, [dispatch, rows]);
+  }, []);
 
   return (
-    <Paper sx={{ width: "100%", overflow: "hidden" }}>
+    <Paper sx={{ width: "100%", overflow: "" }}>
+      <Box sx={{ mb: 4, px: 4 }}>
+        <Grid container spacing={0} justifyContent="flex-end">
+          <Grid xs={7}>
+            <TextField
+              id="search-bar"
+              className="text"
+              onInput={(e) => {
+                dispatch(filterData((e.target as HTMLTextAreaElement).value));
+              }}
+              label="Search"
+              variant="outlined"
+              placeholder="Keyword"
+              size="small"
+            />
+          </Grid>
+          <Grid xs={5}>
+            <Box display="flex" justifyContent="flex-end">
+              <LocalizationProvider
+                dateAdapter={AdapterDayjs}
+                localeText={{ start: "Check-in", end: "Check-out" }}
+              >
+                <DateRangePicker
+                  value={value}
+                  onChange={(newValue) => {
+                    setValue(newValue);
+                    dispatch(
+                      filterDate({
+                        startDate: newValue[0]?.toISOString(),
+                        endDate: newValue[1]?.toISOString(),
+                      })
+                    );
+                  }}
+                  renderInput={(startProps, endProps) => (
+                    <React.Fragment>
+                      <TextField
+                        {...startProps}
+                        size="small"
+                        autoComplete="off"
+                      />
+                      <Box sx={{ mx: 2 }}> to </Box>
+                      <TextField
+                        {...endProps}
+                        size="small"
+                        autoComplete="off"
+                      />
+                    </React.Fragment>
+                  )}
+                />
+              </LocalizationProvider>
+            </Box>
+          </Grid>
+        </Grid>
+      </Box>
+
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }} aria-label="simple table">
           <EnhancedTableHead
             classes={classes}
             order={order}
             orderBy={orderBy}
-            rowCount={rows.length}
             onRequestSort={handleRequestSort}
           />
           <TableBody>
@@ -228,7 +289,11 @@ const TableBasic = () => {
                     <TableCell align="left">{row.category}</TableCell>
                     <TableCell align="left">{row.description}</TableCell>
                     <TableCell align="right">
-                      <Button size="small" variant="contained">
+                      <Button
+                        href={router.pathname + "/" + row.id}
+                        size="small"
+                        variant="contained"
+                      >
                         View
                       </Button>
                     </TableCell>
